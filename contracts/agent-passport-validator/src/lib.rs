@@ -18,7 +18,7 @@
 
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, panic_with_error, symbol_short, Address,
-    BytesN, Env, Symbol, U256, Vec,
+    BytesN, Env, Symbol, Vec, U256,
 };
 
 /// Generates a typed client for the already-deployed verifier straight from its
@@ -146,13 +146,13 @@ impl AgentPassportValidator {
             .instance()
             .get(&DataKey::Verifier)
             .ok_or(Error::NotInitialized)?;
-        let client = verifier::Client::new(&env, &verifier_addr);
+        let client = verifier::Client::new(env, &verifier_addr);
         let vproof = verifier::Groth16Proof {
             a: proof.a.clone(),
             b: proof.b.clone(),
             c: proof.c.clone(),
         };
-        match client.try_verify(&vproof, &public_inputs) {
+        match client.try_verify(&vproof, public_inputs) {
             Ok(Ok(true)) => {}
             _ => return Err(Error::InvalidProof),
         }
@@ -204,7 +204,10 @@ impl AgentPassportValidator {
 
         let mut results = Vec::new(&env);
         for input in proofs.iter() {
-            let root = input.public_inputs.get(0).unwrap_or(U256::from_u32(&env, 0));
+            let root = input
+                .public_inputs
+                .get(0)
+                .unwrap_or(U256::from_u32(&env, 0));
             match Self::verify_internal(&env, &input.proof, &input.public_inputs) {
                 Ok(_) => {
                     results.push_back(VerifyResult {
@@ -234,16 +237,12 @@ impl AgentPassportValidator {
 
     /// True iff `agent_id` holds a minted zk-passport.
     pub fn is_registered(env: Env, agent_id: U256) -> bool {
-        env.storage()
-            .persistent()
-            .has(&DataKey::Passport(agent_id))
+        env.storage().persistent().has(&DataKey::Passport(agent_id))
     }
 
     /// Fetch the stored attestation for an agent, if any.
     pub fn get_passport(env: Env, agent_id: U256) -> Option<Attestation> {
-        env.storage()
-            .persistent()
-            .get(&DataKey::Passport(agent_id))
+        env.storage().persistent().get(&DataKey::Passport(agent_id))
     }
 
     /// True iff this nullifier has already been spent.

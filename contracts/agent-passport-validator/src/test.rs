@@ -209,7 +209,10 @@ fn rejects_tampered_public_input() {
 
     // Tamper the spend cap; the proof no longer matches -> InvalidProof.
     let mut inputs = real_public_inputs(&env);
-    inputs.set(IDX_SPEND_CAP, u256(&env, PI_CAP).add(&U256::from_u32(&env, 1)));
+    inputs.set(
+        IDX_SPEND_CAP,
+        u256(&env, PI_CAP).add(&U256::from_u32(&env, 1)),
+    );
 
     let res = client.try_verify_and_register(&real_proof(&env), &inputs);
     assert_eq!(res, Err(Ok(Error::InvalidProof)));
